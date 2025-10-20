@@ -46,6 +46,7 @@ import org.betonquest.betonquest.conversation.ConversationColors;
 import org.betonquest.betonquest.data.PlayerDataStorage;
 import org.betonquest.betonquest.database.AsyncSaver;
 import org.betonquest.betonquest.database.Backup;
+import org.betonquest.betonquest.database.Connector;
 import org.betonquest.betonquest.database.Database;
 import org.betonquest.betonquest.database.GlobalData;
 import org.betonquest.betonquest.database.MySQL;
@@ -332,7 +333,8 @@ public class BetonQuest extends JavaPlugin implements BetonQuestApi, LanguagePro
 
         saver = new AsyncSaver(loggerFactory.create(AsyncSaver.class, "Database"), config);
         saver.start();
-        Backup.loadDatabaseFromBackup(configAccessorFactory);
+        new Backup(loggerFactory.create(Backup.class), configAccessorFactory, instance.getDataFolder(), new Connector())
+                .loadDatabaseFromBackup();
 
         globalData = new GlobalData(loggerFactory.create(GlobalData.class), saver);
 
@@ -421,7 +423,7 @@ public class BetonQuest extends JavaPlugin implements BetonQuestApi, LanguagePro
             playerDataStorage.initProfiles(profileProvider.getOnlineProfiles(), pluginMessage);
 
             try {
-                playerHider = new PlayerHider(this, this, getVariableProcessor(), profileProvider);
+                playerHider = new PlayerHider(this, this, getVariableProcessor(), profileProvider, config);
             } catch (final QuestException e) {
                 log.error("Could not start PlayerHider! " + e.getMessage(), e);
             }
@@ -594,7 +596,7 @@ public class BetonQuest extends JavaPlugin implements BetonQuestApi, LanguagePro
             playerHider.stop();
         }
         try {
-            playerHider = new PlayerHider(this, this, getVariableProcessor(), profileProvider);
+            playerHider = new PlayerHider(this, this, getVariableProcessor(), profileProvider, config);
         } catch (final QuestException e) {
             log.error("Could not start PlayerHider! " + e.getMessage(), e);
         }

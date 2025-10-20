@@ -32,6 +32,8 @@ import org.betonquest.betonquest.api.quest.objective.ObjectiveID;
 import org.betonquest.betonquest.compatibility.Compatibility;
 import org.betonquest.betonquest.config.PluginMessage;
 import org.betonquest.betonquest.data.PlayerDataStorage;
+import org.betonquest.betonquest.database.Backup;
+import org.betonquest.betonquest.database.Connector;
 import org.betonquest.betonquest.database.GlobalData;
 import org.betonquest.betonquest.database.PlayerData;
 import org.betonquest.betonquest.database.PlayerDataFactory;
@@ -50,7 +52,6 @@ import org.betonquest.betonquest.quest.event.NoNotificationSender;
 import org.betonquest.betonquest.quest.event.NotificationLevel;
 import org.betonquest.betonquest.quest.event.give.GiveEvent;
 import org.betonquest.betonquest.quest.objective.variable.VariableObjective;
-import org.betonquest.betonquest.util.Utils;
 import org.betonquest.betonquest.web.downloader.DownloadFailedException;
 import org.betonquest.betonquest.web.downloader.Downloader;
 import org.betonquest.betonquest.web.updater.Updater;
@@ -291,7 +292,8 @@ public class QuestCommand implements CommandExecutor, SimpleTabCompleter {
                             sendMessage(sender, "offline");
                             break;
                         }
-                        Utils.backup(configAccessorFactory, instance);
+                        new Backup(loggerFactory.create(Backup.class), configAccessorFactory, instance.getDataFolder(),
+                                new Connector()).backup(instance.getDescription().getVersion());
                         break;
                     case "debug":
                         handleDebug(sender, args);
@@ -1720,16 +1722,10 @@ public class QuestCommand implements CommandExecutor, SimpleTabCompleter {
     /**
      * Variables stuff.
      */
+    @SuppressWarnings("PMD.NcssCount")
     private void handleVariables(final CommandSender sender, final String... args) {
         final Profile profile = getTargetProfile(sender, args);
         if (profile == null) {
-            return;
-        }
-
-        final boolean isOnline = profile.getOnlineProfile().isPresent();
-        if (!isOnline) {
-            log.debug("Can't access variable data on offline player");
-            sendMessage(sender, "offline_invalid");
             return;
         }
 
@@ -1758,9 +1754,30 @@ public class QuestCommand implements CommandExecutor, SimpleTabCompleter {
         }
         log.debug("Using variable objective " + variableObjective.getLabel());
 
+        final boolean isOnline = profile.getOnlineProfile().isPresent();
+        final VariableObjective.VariableData data;
+        if (isOnline) {
+            data = null;
+        } else {
+            final PlayerData offline = instance.getPlayerDataStorage().getOffline(profile);
+            final String instruction = offline.getRawObjectives().get(variableObjective.getLabel());
+            if (instruction == null) {
+                log.debug("There is no data for that objective for that player!");
+                sendMessage(sender, "error",
+                        new VariableReplacement("error", Component.text("There is no data for that objective!")));
+                return;
+            }
+            data = new VariableObjective.VariableData(instruction, profile, objectiveID);
+        }
+
         final String subCommand = args.length == 3 ? "list" : args[3].toLowerCase(Locale.ROOT);
         switch (subCommand) {
             case "list", "l" -> {
+                if (data != null) {
+                    log.debug("Can't list variable data on offline player");
+                    sendMessage(sender, "offline_invalid");
+                    return;
+                }
                 // check for actual values
                 final Map<String, String> properties = variableObjective.getProperties(profile);
                 if (properties == null) {
@@ -1786,7 +1803,11 @@ public class QuestCommand implements CommandExecutor, SimpleTabCompleter {
                 }
                 final String value = String.join(" ", Arrays.copyOfRange(args, 5, args.length));
                 log.debug("Setting value " + value + " for key " + args[4] + " for " + profile + " in " + variableObjective.getLabel());
-                variableObjective.store(profile, args[4], value);
+                if (data == null) {
+                    variableObjective.store(profile, args[4], value);
+                } else {
+                    data.add(args[4], value);
+                }
                 sendMessage(sender, "value_set",
                         new VariableReplacement("value", Component.text(value)),
                         new VariableReplacement("key", Component.text(args[4])));
@@ -1798,7 +1819,11 @@ public class QuestCommand implements CommandExecutor, SimpleTabCompleter {
                     return;
                 }
                 log.debug("Removing key " + args[4] + " for " + profile + " in " + variableObjective.getLabel());
-                variableObjective.store(profile, args[4], null);
+                if (data == null) {
+                    variableObjective.store(profile, args[4], null);
+                } else {
+                    data.add(args[4], null);
+                }
                 sendMessage(sender, "key_remove",
                         new VariableReplacement("key", Component.text(args[4])));
             }

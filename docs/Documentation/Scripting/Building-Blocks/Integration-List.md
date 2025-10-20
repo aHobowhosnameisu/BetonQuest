@@ -686,6 +686,20 @@ mmocoreattributereallocationpoints 1
 !!! info
     MythicMobs integration supports all [BetonQuest NPC](../../Features/NPCs.md) features.
 
+### Items
+
+Mythic(Mobs) items are integrated to the [BetonQuest Items](../../Features/Items.md) system.
+
+```YAML linenums="1" title="Example"
+items:
+  crown: mythic KingsCrown
+  sword: mythic SkeletonKingSword
+conditions:
+  hasCrown: armor crown
+events:
+  giveSword: give sword
+```
+
 ### Objectives
 
 #### MobKill: `mmobkill`
@@ -754,6 +768,17 @@ events:
     
 !!! info "Private & Target Arguments"
     The `private` and `target` arguments are ignored when the event is used in a static context like [Schedules](../Schedules.md).
+
+#### Cast Mythic Skill: `mcast`
+
+| Parameter | Syntax | Default Value          | Explanation            |
+|-----------|--------|------------------------|------------------------|
+| _name_    | Name   | :octicons-x-circle-16: | Name of Skill to cast. |
+
+```YAML title="Example"
+events:
+  castPoison: mcast AngrySludgePoison
+```
 
 ## PlaceholderAPI[](https://www.spigotmc.org/resources/6245/)
 

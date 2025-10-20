@@ -2,7 +2,6 @@ package org.betonquest.betonquest.compatibility.holograms.decentholograms;
 
 import eu.decentsoftware.holograms.api.DHAPI;
 import eu.decentsoftware.holograms.api.holograms.Hologram;
-import org.betonquest.betonquest.BetonQuest;
 import org.betonquest.betonquest.api.BetonQuestApi;
 import org.betonquest.betonquest.api.config.quest.QuestPackage;
 import org.betonquest.betonquest.api.config.quest.QuestPackageManager;
@@ -37,12 +36,13 @@ public class DecentHologramsIntegrator extends HologramIntegrator {
     /**
      * Creates a new DecentHologramsIntegrator for DecentHolograms.
      *
+     * @param log         the custom logger for this class
      * @param packManager the quest package manager to get quest packages from
      */
-    public DecentHologramsIntegrator(final QuestPackageManager packManager) {
+    public DecentHologramsIntegrator(final BetonQuestLogger log, final QuestPackageManager packManager) {
         super("DecentHolograms", "2.7.5");
+        this.log = log;
         this.packManager = packManager;
-        this.log = BetonQuest.getInstance().getLoggerFactory().create(getClass());
     }
 
     @Override
@@ -63,7 +63,7 @@ public class DecentHologramsIntegrator extends HologramIntegrator {
 
     @Override
     public String parseVariable(final QuestPackage pack, final String text) {
-        /* We must convert a normal BetonQuest variable such as "%pack.objective.kills.left%" to
+        /* We must convert a normal BetonQuest variable with package to
            "%betonquest_pack:objective.kills.left%" which is parsed by DecentHolograms as a PlaceholderAPI placeholder. */
         final Matcher matcher = HologramProvider.VARIABLE_VALIDATOR.matcher(text);
         return matcher.replaceAll(match -> {

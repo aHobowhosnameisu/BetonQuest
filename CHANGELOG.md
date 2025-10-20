@@ -47,6 +47,8 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - `debug dump` command to only dump the history to the log file
 - `brew` event/condition `mode` parameter to select by name or id
 - `timer` objective to track ingame time
+- `mcast` event to cast a Mythic(Mobs) skill for a player
+- `mythic`(mobs) item integration
 ### Changed
 - Spigot is no longer supported, paper is now required 
 - message.yml file was deleted and instead the lang folder now contains all translations
@@ -95,6 +97,7 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - `npc_conversations` show the combat message only if there is a bound conversation
 - Addressing cross Packages now use `>` instead of `.` to solve conflicts in Variables
 - Bukkit API events are now called sync/async depending on the tread context they are called in
+- `variable` command allows setting and getting data now for offline players
 ### Deprecated
 ### Removed
 - undocumented prefix feature in conversation

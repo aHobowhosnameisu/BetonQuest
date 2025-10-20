@@ -7,9 +7,11 @@ import org.betonquest.betonquest.api.instruction.variable.Variable;
 import org.betonquest.betonquest.api.logger.BetonQuestLogger;
 import org.betonquest.betonquest.api.logger.BetonQuestLoggerFactory;
 import org.betonquest.betonquest.api.quest.QuestException;
+import org.betonquest.betonquest.kernel.processor.StartTask;
 import org.betonquest.betonquest.kernel.processor.quest.VariableProcessor;
 import org.bukkit.Location;
 import org.bukkit.configuration.ConfigurationSection;
+import org.bukkit.plugin.Plugin;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -17,7 +19,12 @@ import java.util.List;
 /**
  * Hides and shows holograms to players, based on conditions at a fixed location.
  */
-public class LocationHologramLoop extends HologramLoop {
+public class LocationHologramLoop extends HologramLoop implements StartTask {
+    /**
+     * Plugin to start tasks.
+     */
+    private final Plugin plugin;
+
     /**
      * Starts a loop, which checks hologram conditions and shows them to players.
      *
@@ -26,11 +33,13 @@ public class LocationHologramLoop extends HologramLoop {
      * @param packManager       the quest package manager to get quest packages from
      * @param variableProcessor the {@link VariableProcessor} to use
      * @param hologramProvider  the hologram provider to create new holograms
+     * @param plugin            the plugin to start tasks
      */
     public LocationHologramLoop(final BetonQuestLoggerFactory loggerFactory, final BetonQuestLogger log,
                                 final QuestPackageManager packManager, final VariableProcessor variableProcessor,
-                                final HologramProvider hologramProvider) {
+                                final HologramProvider hologramProvider, final Plugin plugin) {
         super(loggerFactory, log, packManager, variableProcessor, hologramProvider, "Hologram", "holograms");
+        this.plugin = plugin;
     }
 
     @Override
@@ -48,5 +57,10 @@ public class LocationHologramLoop extends HologramLoop {
         } else {
             return new Variable<>(variableProcessor, pack, rawLocation, Argument.LOCATION).getValue(null);
         }
+    }
+
+    @Override
+    public void startAll() {
+        HologramRunner.start(plugin);
     }
 }
